@@ -1,0 +1,147 @@
+---
+title: "Vivian the Second of Atlanta"
+author: "Vivian the Second of Atlanta"
+format: html
+editor: visual
+---
+
+```{r}
+#| message: false
+#| echo: false
+#| warning: false
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+```
+
+## Study of Admission Bias at UC Berkeley 1973
+
+In 1973, UC Berkeley faced allegations of gender-based discrimination in their admissions process. The key question being raised was: Does a student's gender significantly influence their chances of admission? Here we will breakdown admissions data in hopes to find a conclusion to this question.
+
+## Data Overview
+
+To start we will load our data and take a look at it using the head() and summary() functions. We can see that each case in our data set is a student who applied to UC Berkeley. Each student is listed with their application year, major, gender, and admission decision. Although the year attribute exists, we can also see that all of the data has been collected in 1973.
+
+```{r}
+url <- "https://waf.cs.illinois.edu/discovery/berkeley.csv"
+data <- read.csv(url)
+head(data)
+summary(data)
+```
+
+## Gender Analysis
+
+Now that we have seen our data, lets start to answer our question. The first thing we will do is look at the admission rates based on their gender. Here we can see a noticeable gap between Male and Female admission rates. However, we must explore other variables before drawing a conclusion.
+
+```{r}
+#| echo: false
+#| warning: false
+table(data$Gender, data$Admission)
+
+admission_rates_gender <- data %>%
+  group_by(Gender) %>%
+  summarize(
+    Total = n(),
+    Accepted = sum(Admission == "Accepted"),
+    Admission_Rate = Accepted / Total
+  )
+ggplot(admission_rates_gender, aes(x = Gender, y = Admission_Rate)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Admission Rates by Gender", 
+       x = "Gender", 
+       y = "Admission Rate") +
+  theme_minimal()
+```
+
+## Major Analysis
+
+The other large factor in our data set is an applicant's major. Here we will explore admission results based on major. From this we can see that there is a lot of variation with admission rates across the majors. This raises the question if the admissions gap between genders could be related to the admissions gaps across majors.
+
+```{r}
+#| echo: false
+#| warning: false
+admission_rate_major <- data %>%
+  select(Major, Admission) %>%
+  group_by(Major) %>%
+  summarize(
+    Total = n(),
+    Accepted = sum(Admission == "Accepted"),
+    Admission_Rate = Accepted / Total
+  )
+ggplot(admission_rate_major, aes(x = Major, y = Admission_Rate)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Admission Rates by Major", 
+       x = "Major", 
+       y = "Admission Rate") +
+  theme_minimal()
+```
+
+## Major Breakdown
+
+Here we will breakdown each major by male and female. Here we can see that some majors are primarily female while others are male dominant.
+
+```{r}
+#| echo: false
+#| warning: false
+applications_gender_major <- data %>%
+  select(Major, Gender) %>%
+  group_by(Major, Gender) %>%
+  summarize(
+    Total = n()
+  )
+ggplot(applications_gender_major, aes(x = Major, y = Total, fill = Gender)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Total Applications by Major and Gender", 
+       x = "Major", 
+       y = "Applications") +
+  theme_minimal()
+```
+
+## Complete Analysis
+
+Now that we have broken down each major by gender, we can look at their admission rates. From this graphic we can see that some majors have more females admitted and some majors have more males admitted. We can generate another graphic to look at this closer
+
+```{r}
+#| echo: false
+#| warning: false
+admission_rates_gender_major <- data %>%
+  group_by(Major, Gender) %>%
+  summarize(
+    Total = n(),
+    Accepted = sum(Admission == "Accepted"),
+    Admission_Rate = Accepted / Total
+  )
+
+ggplot(admission_rates_gender_major, aes(x = Major, y = Admission_Rate, fill = Gender)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Admission Rates by Major and Gender", 
+       x = "Major", 
+       y = "Admission Rate") +
+  theme_minimal()
+```
+
+In this graphic we can see that when looking at admission rates within each major, the differences become less obvious. Both males and females have majors that they are primarily admitted to.
+
+```{r}
+#| echo: false
+#| warning: false
+admission_rate_diff <- admission_rates_gender_major %>%
+  select(Major, Gender, Admission_Rate) %>%
+  pivot_wider(names_from = Gender, values_from = Admission_Rate) %>%
+  mutate(Difference = M - F)
+
+ggplot(admission_rate_diff, aes(x = Major, y = Difference, fill = Difference > 0)) +
+  geom_bar(stat = "identity") +
+  scale_fill_manual(values = c("dark green", "skyblue"), 
+                    labels = c("Female Higher", "Male Higher")) +  # Red for below 0, skyblue for above 0
+  labs(title = "Difference Between Male and Female Admission Rates by Major",
+       x = "Major", 
+       y = "Difference (Male - Female)") +
+  geom_hline(yintercept = 0, linetype = "dotted", color = "black", size = 1) +  # Add horizontal dotted line at y = 0
+  theme_minimal() +
+  theme(legend.title = element_blank())
+```
+
+## Conclusion
+
+Although we revealed initially that more males were admitted than females, after further analysis the answer seems more complicated. It is clear that there exists majors that have more women admitted than men. It is also clear that some majors are more male dominated than others. The existence of majors where more females are accepted than males directly challenges the idea of males having a significant advantage in the admissions process. The difference in admission rates is more closely related to the major that someone is applying to. To draw conclusions from this further would require a more extensive analysis of each major.
