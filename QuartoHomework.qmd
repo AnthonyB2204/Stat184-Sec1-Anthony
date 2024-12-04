@@ -1,0 +1,151 @@
+---
+title: "Quarto Homework"
+subtitle: "Drew Lippert"
+format: html
+editor: visual
+self-contained: true
+---
+
+## Question 1
+
+```{r}
+library(ggplot2)
+
+myFunction <- function(x){
+  y <- (cos(4*x) + tan(0.5*x))^4
+  return(y)
+}
+
+ggplot() +
+  stat_function(
+    fun = myFunction,
+    xlim = c(0, 1),
+    n = 1000
+  ) +
+  theme_bw() +
+  labs(
+    x = "x",
+    y = "h(x)"
+  )
+```
+
+## Question 2
+
+```{r}
+library(ggplot2)
+data(diamonds)
+str(diamonds)
+head(diamonds)
+library(tidyverse)
+
+ggplot(data = diamonds,
+mapping = aes(x = price, y = carat, color = cut)) +
+  geom_point(size = 2)
+  labs(x = "Price ($)",
+       y = "Carat (g)",
+       color = "Cut Quality",
+       title = "Carats by Price") + theme_minimal()
+```
+
+## Question 3
+
+```{r}
+
+# Reading in the data
+tortillaData <- read.csv("~/Downloads/tortilla_data.csv")
+
+# displayed first few rows of tortillaData
+head(tortillaData)
+
+# Part A: 2007 average price
+year2007 <- subset(tortillaData, year == 2007)
+average2007 <- mean(year2007$price, na.rm = T)
+print(average2007)
+
+# Part B: 2024 average price
+year2024 <- subset(tortillaData, year == 2024)
+average2024 <- mean(year2024$price, na.rm = T)
+print(average2024)
+
+# Part C: % change in average price from '07 to '24
+percentChange <- ((average2024 - average2007) / average2007) * 100
+print(percentChange)
+
+# Part D: plot for average price of '07 to '24
+library(dplyr)
+library(ggplot2)
+
+averageYears <- tortillaData %>%
+  filter(year >= 2007 & year <= 2024) %>%
+  group_by(year) %>%
+  summarise(averageTortillas = mean(price, na.rm = T))
+
+print(averageYears)
+
+ggplot(data = averageYears, aes(x = as.factor(year), y = averageTortillas, color = as.factor(year))) +
+  geom_line(size = 0.5) +
+  geom_point(size = 1) +
+  labs(title = "Comparison of Average Prices from 2007 to 2024", 
+       x = "Years", 
+       y = "Price Averages from 2007-2024") + 
+  theme_minimal() + theme(axis.text.x = element_text(angle = 50, hjust = 1))
+
+# Part E: 2016 summary statistics
+library(knitr)
+
+tortillas2016 <- tortillaData %>% filter(year == 2016)
+
+summary <- tortillas2016 %>%
+  group_by(state) %>%
+  summarise(
+    average2016 = mean(price, na.rm = T),
+    median2016 = median(price, na.rm = T),
+    sd2016 = sd(price, na.rm = T),
+    min2016 = min(price, na.rm = T),
+    max2016 = max(price, na.rm = T)
+  )
+
+print(summary)
+
+kable(summary %>% select(state, average2016),
+      names = c("State", "Averages in 2016"),
+      title = "Averages Prices in 2016",
+      caption = "2016 Average Prices")
+
+#| fig-cap: "Average Price Graph"
+
+ggplot(tortillas2016, aes(x = price, y = state, fill = price)) +
+  geom_boxplot() +
+  labs(title = "Average Prices in 2016",
+       x = "Price",
+       y = "State") + 
+  theme_minimal()
+
+# Part F: Plot of '07 to '24 Store Types
+
+nuevoLeon <- tortillaData %>%
+  filter(state == "NuevoLeon", year >= 2007 & year <= 2024)
+
+head(nuevoLeon)
+
+#| fig-cap: "Nuevo Leon Prices"
+
+ggplot(nuevoLeon, aes(x = year, y = price, color = storeType, group = storeType)) +
+  geom_line(size = 0.5) +
+  geom_point(size = 1) +
+  labs(title = "Store Types from 2007 to 2024",
+       x = "Year",
+       y = "Price") + theme_minimal() + theme(axis.text.x = element_text(angle = 50, hjust = 1))
+
+# Prices were higher in "Mom and Pop Store(s)" vs the "Big Retail Stores" over the years 2007 to 2024.
+
+# Part G: Tortilla picture
+
+getwd()
+
+
+```
+
+\!["Picture of a Tortilla"](Tortillas.png){width=100 height=100}
+
+\[\^1\]: [PNG Tortilla](https://www.google.com/url?sa=i&url=https%3A%2F%2Fpngtree.com%2Fso%2Ftortilla&psig=AOvVaw1mzyyDRLAJ6RHtK9TLhXSi&ust=1732216254978000&source=images&cd=vfe&opi=89978449&ved=0CBcQjhxqFwoTCMDu58XO64kDFQAAAAAdAAAAABAE)
